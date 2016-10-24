@@ -1102,4 +1102,8 @@ end)
 @deprecate den denominator
 @deprecate num numerator
 
+# #19088
+@deprecate takebuf_array take!
+@deprecate takebuf_string(b) String(take!(b))
+
 # End deprecations scheduled for 0.6
