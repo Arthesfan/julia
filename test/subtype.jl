@@ -628,6 +628,10 @@ type A11136 end
 type B11136 end
 abstract Foo11367
 
+abstract AbstractTriangular{T,S<:AbstractMatrix} <: AbstractMatrix{T}
+immutable UpperTriangular{T,S<:AbstractMatrix} <: AbstractTriangular{T,S} end
+immutable UnitUpperTriangular{T,S<:AbstractMatrix} <: AbstractTriangular{T,S} end
+
 function test_intersection()
     @testintersect(Vector{Float64}, Vector{Union{Float64,Float32}}, Bottom)
 
@@ -796,6 +800,11 @@ function test_intersection()
                    (@UnionAll X<:(@UnionAll T Tuple{T,T}) Ref{X}))
     @testintersect(Ref{@UnionAll T @UnionAll S Tuple{T,S}},
                    Ref{@UnionAll T Tuple{T,T}}, Bottom)
+
+    @testintersect(Tuple{T,T} where T<:Union{UpperTriangular, UnitUpperTriangular},
+                   Tuple{AbstractArray{T,N}, AbstractArray{T,N}} where N where T,
+                   Union{Tuple{T,T} where T<:UpperTriangular,
+                         Tuple{T,T} where T<:UnitUpperTriangular})
 end
 
 function test_intersection_properties()
