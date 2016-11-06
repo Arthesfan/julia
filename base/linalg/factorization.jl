@@ -57,6 +57,10 @@ for f in (:A_ldiv_B!, :Ac_ldiv_B!, :At_ldiv_B!)
         $f(A, copy!(Y, B))
 end
 
+# fallback methods for transposed solves
+At_ldiv_B{T<:Real}(F::Factorization{T}, B) = Ac_ldiv_B(F, B)
+At_ldiv_B(F::Factorization, B) = conj.(Ac_ldiv_B(F, conj.(B)))
+
 """
     A_ldiv_B!([Y,] A, B) -> Y
 
