@@ -2299,14 +2299,6 @@
   (append! (diff (find-decls 'const e) glob)
            (find-assigned-vars e env)))
 
-(define (occurs-outside? sym e excl)
-  (cond ((eq? e sym) #t)
-        ((not (pair? e)) #f)
-        ((eq? e excl) #f)
-        ((memq (car e) '(lambda module toplevel quote top globalref core line inert)) #f)
-        (else (any (lambda (x) (occurs-outside? sym x excl))
-                   (cdr e)))))
-
 ;; local variable identification and renaming, derived from:
 ;; 1. (local x) expressions inside this scope-block and lambda
 ;; 2. (const x) expressions in a scope-block where x is not declared global
@@ -2353,15 +2345,10 @@
                   ;; have the same name as a variable used in an outer scope
                   (if (or newlam (not lam))
                       '()
-                      (receive
-                       (conflicted unknown)
-                       (separate (lambda (v) (or (memq v env) (memq v other-locals)))
-                                 vars)
-                       (append
-                        conflicted
-                        (let ((lbod (lam:body lam)))
-                          (filter (lambda (v) (occurs-outside? v lbod e))
-                                  unknown)))))))
+                       (filter (lambda (v) (or (memq v env)
+                                               (memq v other-locals)
+                                               (memq v (caddr lam))))
+                               vars))))
                 (need-rename (need-rename? vars))
                 (need-rename-def (need-rename? vars-def))
                 ;; new gensym names for conflicting variables
