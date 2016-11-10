@@ -68,6 +68,8 @@ Deprecated or removed
 
   * `num` and `den` have been deprecated in favor of `numerator` and `denominator` respectively ([#19233]).
 
+* `Dates.recur` has been deprecated in favor of `filter` ([#19288])
+
 Julia v0.5.0 Release Notes
 ==========================
 
@@ -696,3 +698,4 @@ Language tooling improvements
 [#18839]: https://github.com/JuliaLang/julia/issues/18839
 [#19018]: https://github.com/JuliaLang/julia/issues/19018
 [#19233]: https://github.com/JuliaLang/julia/issues/19233
+[#19288]: https://github.com/JuliaLang/julia/issues/19288
