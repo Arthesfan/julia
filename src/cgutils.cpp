@@ -38,6 +38,24 @@ static Value *prepare_call(Value *Callee)
                   __FUNCTION__, (ctx)->file.str().c_str(), *(ctx)->line);
 
 
+// --- hook checks ---
+
+#define JL_HOOK_TEST(params,hook) ((params)->hooks.hook != jl_nothing)
+
+#define JL_HOOK_CALL(params,hook,argc,...) \
+    _hook_call<argc>((params)->hooks.hook, {{__VA_ARGS__}});
+template<int N>
+static inline void _hook_call(jl_value_t *hook, std::array<jl_value_t*,N> args) {
+    jl_value_t **argv;
+    JL_GC_PUSHARGS(argv, N+1);
+    argv[0] = hook;
+    for (int i = 0; i < N; i++)
+        argv[i+1] = args[i];
+    jl_apply(argv, N+1);
+    JL_GC_POP();
+}
+
+
 // --- string constants ---
 static StringMap<GlobalVariable*> stringConstants;
 static Value *stringConstPtr(IRBuilder<> &builder, const std::string &txt)
@@ -672,12 +690,18 @@ static void error_unless(Value *cond, const std::string &msg, jl_codectx_t *ctx)
 static void raise_exception(Value *exc, jl_codectx_t *ctx,
                             BasicBlock *contBB=nullptr)
 {
-    JL_FEAT_REQUIRE(ctx, runtime);
+    if (JL_HOOK_TEST(ctx->params, raise_exception)) {
+        JL_HOOK_CALL(ctx->params, raise_exception, 2,
+                     jl_box_voidpointer(wrap(builder.GetInsertBlock())),
+                     jl_box_voidpointer(wrap(exc)));
+    } else {
+        JL_FEAT_REQUIRE(ctx, runtime);
 #if JL_LLVM_VERSION >= 30700
-    builder.CreateCall(prepare_call(jlthrow_func), { exc });
+        builder.CreateCall(prepare_call(jlthrow_func), { exc });
 #else
-    builder.CreateCall(prepare_call(jlthrow_func), exc);
+        builder.CreateCall(prepare_call(jlthrow_func), exc);
 #endif
+    }
     builder.CreateUnreachable();
     if (!contBB) {
         contBB = BasicBlock::Create(jl_LLVMContext, "after_throw", ctx->f);
